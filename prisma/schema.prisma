@@ -48,6 +48,7 @@ model Company {
   updatedAt       DateTime          @updatedAt
   users           User[]
   products        Product[]
+  productVariants ProductVariant[]
   customers       Customer[]
   invoices        Invoice[]
   stockMovements  StockMovement[]
