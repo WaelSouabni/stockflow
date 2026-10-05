@@ -9,13 +9,13 @@ const itemSchema = z.object({
   quantity: z.number().finite().positive(),
   unitPrice: z.number().finite().nonnegative(),
   discount: z.number().finite().nonnegative(),
-  productId: z.string().min(1).optional(),
+  productId: z.string().trim().min(1).max(100).optional(),
 }).refine(i => i.discount <= i.quantity * i.unitPrice, {
   message: "La remise d'une ligne ne peut pas dépasser son montant.",
 });
 
 const schema = z.object({
-  customerId: z.string().min(1),
+  customerId: z.string().trim().min(1).max(100),
   items: z.array(itemSchema).min(1).max(200),
   taxRate: z.number().finite().min(0).max(100),
   discount: z.number().finite().nonnegative(),
@@ -23,6 +23,11 @@ const schema = z.object({
 }).superRefine((input, ctx) => {
   const subtotal = input.items.reduce((sum, item) => sum + item.quantity * item.unitPrice - item.discount, 0);
   if (input.discount > subtotal) ctx.addIssue({ code: "custom", path: ["discount"], message: "La remise globale ne peut pas dépasser le sous-total." });
+});
+
+const statusInputSchema = z.object({
+  id: z.string().trim().min(1).max(100),
+  status: z.enum(["DRAFT", "SENT", "PAID", "OVERDUE", "CANCELLED"]),
 });
 
 export async function createInvoiceAction(input: unknown) {
@@ -36,12 +41,11 @@ export async function createInvoiceAction(input: unknown) {
   return invoice.id;
 }
 
-export async function updateInvoiceStatusAction(
-  id: string,
-  status: "DRAFT" | "SENT" | "PAID" | "OVERDUE" | "CANCELLED",
-) {
+export async function updateInvoiceStatusAction(id: string, status: "DRAFT" | "SENT" | "PAID" | "OVERDUE" | "CANCELLED") {
   await requireRole("ADMIN", "MANAGER");
-  await updateInvoiceStatus(id, status);
+  const parsed = statusInputSchema.safeParse({ id, status });
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message || "Statut invalide.");
+  await updateInvoiceStatus(parsed.data.id, parsed.data.status);
   revalidatePath("/invoices");
   revalidatePath("/quotes");
   revalidatePath("/dashboard");
