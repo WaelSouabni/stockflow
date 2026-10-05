@@ -50,8 +50,13 @@ export async function loginUser(email: string, password: string, rateLimitKey?: 
   await assertLoginAllowed(key);
 
   const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
-  const valid = Boolean(user && user.active && (await bcrypt.compare(password, user.passwordHash)));
 
+  if (!user || !user.active) {
+    await recordLoginFailure(key);
+    throw new Error("Email ou mot de passe incorrect.");
+  }
+
+  const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) {
     await recordLoginFailure(key);
     throw new Error("Email ou mot de passe incorrect.");
