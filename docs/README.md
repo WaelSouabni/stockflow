@@ -13,12 +13,7 @@ La CI GitHub Actions est verte et vérifie notamment Prisma, les tests unitaires
 - [Roadmap](./ROADMAP.md)
 - [Déploiement](./DEPLOYMENT.md)
 - [Monitoring](./MONITORING.md)
-- [Tests](./TESTING.md)
-- [Sécurité](./SECURITY.md)
-- [Multi-tenant](./MULTI-TENANT.md)
-- [Onboarding](./ONBOARDING.md)
-- [Emails](./EMAILS.md)
-- [Paiements clients](./PAYMENTS.md)
-- [Facturation SaaS](./SAAS-BILLING.md)
+
+Les guides détaillés de tests, sécurité, multi-tenant, onboarding, emails, paiements clients et facturation SaaS seront ajoutés au fur et à mesure de leur formalisation.
 
 Les documents de fonctionnalités reportées sont des spécifications de reprise et ne signifient pas que ces fonctionnalités sont disponibles.
