@@ -1,0 +1,4 @@
+"use server";
+import {revalidatePath} from "next/cache"; import {z} from "zod"; import {requireRole} from "@/lib/auth"; import {recordStockMovement} from "@/services/stock.service";
+const schema=z.object({productId:z.string().min(1),type:z.enum(["IN","OUT","ADJUSTMENT"]),quantity:z.coerce.number().finite().int().min(0),reason:z.string().trim().max(300).optional()});
+export async function recordStockMovementAction(formData:FormData){await requireRole("ADMIN","MANAGER");const parsed=schema.safeParse(Object.fromEntries(formData));if(!parsed.success)throw new Error(parsed.error.issues[0]?.message||"Mouvement invalide");if(parsed.data.type!=="ADJUSTMENT"&&parsed.data.quantity<1)throw new Error("La quantité doit être supérieure à 0.");await recordStockMovement(parsed.data);revalidatePath("/products");revalidatePath("/stock");revalidatePath("/dashboard");}

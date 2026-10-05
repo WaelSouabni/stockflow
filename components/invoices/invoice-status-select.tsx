@@ -1,0 +1,3 @@
+"use client";
+import {useTransition} from "react"; import {updateInvoiceStatusAction} from "@/actions/invoice.actions";
+export function InvoiceStatusSelect({id,status}:{id:string;status:"DRAFT"|"SENT"|"PAID"|"OVERDUE"|"CANCELLED"}){const [pending,startTransition]=useTransition();return <select disabled={pending} value={status} onChange={e=>startTransition(()=>updateInvoiceStatusAction(id,e.target.value as typeof status))} className="rounded-full border px-2 py-1 text-xs font-medium"><option value="DRAFT">Brouillon</option><option value="SENT">Envoyée</option><option value="PAID">Payée</option><option value="OVERDUE">Impayée</option><option value="CANCELLED">Annulée</option></select>}
