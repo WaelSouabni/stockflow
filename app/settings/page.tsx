@@ -16,7 +16,7 @@ export default async function Settings() {
           <div><p className="text-sm text-blue-600">Configuration</p><h1 className="text-3xl font-bold">Entreprise</h1><p className="mt-1 text-sm text-slate-500">Informations utilisées dans les factures et devis.</p></div>
           <Link href="/settings/users" className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-slate-50">Gérer les utilisateurs</Link>
         </div>
-        <form action={saveSettingsAction} className="mt-6 grid gap-6">
+        <form aria-label="Paramètres de l’entreprise" action={saveSettingsAction} className="mt-6 grid gap-6">
           <section className="grid gap-4 rounded-2xl border bg-white p-5 md:grid-cols-2">
             <h2 className="font-semibold md:col-span-2">Identité</h2>
             {field("Nom de l’entreprise", "companyName", s?.companyName)}

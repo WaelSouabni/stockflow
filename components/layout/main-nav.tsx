@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
+import { getSession } from "@/lib/auth";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
@@ -17,14 +18,15 @@ const links = [
   { href: "/settings/users", label: "Utilisateurs" },
 ] as const;
 
-export function MainNav() {
+export async function MainNav() {
   const pathname = usePathname();
+  const session = await getSession();
   const [open, setOpen] = useState(false);
 
   return (
-    <nav className="sticky top-0 z-40 border-b bg-white/95 backdrop-blur dark:bg-slate-950/95">
+    <nav aria-label="Navigation principale" className="sticky top-0 z-40 border-b bg-white/95 backdrop-blur dark:bg-slate-950/95">
       <div className="mx-auto flex min-h-16 max-w-7xl items-center gap-3 px-4 sm:px-6">
-        <Link href="/dashboard" className="shrink-0 text-lg font-bold tracking-tight" onClick={() => setOpen(false)}>
+        <Link href={session ? "/dashboard" : "/login"} aria-label="StockFlow - Accueil" className="shrink-0 text-lg font-bold tracking-tight" onClick={() => setOpen(false)}>
           StockFlow
         </Link>
 
