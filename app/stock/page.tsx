@@ -9,7 +9,7 @@ export default async function StockPage() {
   ]);
 
   return (
-    <main className="min-h-screen p-6 md:p-10">
+    <main className="min-h-screen p-4 sm:p-6 md:p-10">
       <div className="mx-auto max-w-7xl">
         <header>
           <p className="text-sm font-medium text-blue-600">Inventaire</p>
@@ -72,7 +72,7 @@ export default async function StockPage() {
             <p className="text-sm text-slate-500">100 derniers mouvements.</p>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border bg-white">
+          <div className="overflow-x-auto rounded-2xl border bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <table className="w-full text-sm">
               <thead className="bg-slate-50">
                 <tr>
