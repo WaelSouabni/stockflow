@@ -1,4 +1,1 @@
-import "./globals.css";
-import type { Metadata } from "next";
-export const metadata: Metadata = { title:"StockFlow", description:"Modern inventory and invoicing management." };
-export default function RootLayout({children}:{children:React.ReactNode}){return <html lang="fr"><body>{children}</body></html>;}
+import "./globals.css"; import type {Metadata} from "next"; import Link from "next/link"; export const metadata:Metadata={title:"StockFlow",description:"Gestion de stock et facturation"}; export default function RootLayout({children}:{children:React.ReactNode}){return <html lang="fr"><body><nav className="border-b bg-white"><div className="mx-auto flex max-w-7xl flex-wrap gap-2 px-6 py-3"><Link href="/dashboard" className="mr-4 font-bold">StockFlow</Link><Link href="/products" className="px-2 py-1">Produits</Link><Link href="/stock" className="px-2 py-1">Stock</Link><Link href="/customers" className="px-2 py-1">Clients</Link><Link href="/invoices" className="px-2 py-1">Factures</Link><Link href="/settings" className="px-2 py-1">Entreprise</Link></div></nav>{children}</body></html>}
