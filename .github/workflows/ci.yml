@@ -50,8 +50,20 @@ jobs:
       - name: Apply Prisma schema
         run: npx prisma db push
 
+      - name: Seed test database
+        run: npm run prisma:seed
+
+      - name: Unit tests
+        run: npm test
+
       - name: TypeScript
         run: npm run typecheck
 
       - name: Next.js production build
         run: npm run build
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: End-to-end tests
+        run: npm run test:e2e
