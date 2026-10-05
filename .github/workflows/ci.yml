@@ -6,9 +6,14 @@ on:
   pull_request:
     branches: [master, develop]
 
+concurrency:
+  group: stockflow-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     services:
       postgres:
         image: postgres:16-alpine
@@ -26,7 +31,7 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://stockflow:stockflow@localhost:5432/stockflow?schema=public
-      AUTH_SECRET: ci-only-stockflow-secret
+      AUTH_SECRET: ci-only-stockflow-secret-at-least-32-characters
       NEXT_TELEMETRY_DISABLED: 1
 
     steps:
@@ -36,10 +41,15 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 20.x
+          cache: npm
+          cache-dependency-path: package.json
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --no-audit --no-fund
+
+      - name: Validate environment
+        run: npm run env:check
 
       - name: Generate Prisma Client
         run: npm run prisma:generate
@@ -47,8 +57,8 @@ jobs:
       - name: Validate Prisma schema
         run: npx prisma validate
 
-      - name: Apply Prisma schema
-        run: npx prisma db push
+      - name: Apply Prisma migrations
+        run: npm run prisma:migrate:deploy
 
       - name: Seed test database
         run: npm run prisma:seed
@@ -61,6 +71,22 @@ jobs:
 
       - name: Next.js production build
         run: npm run build
+
+      - name: Production health check
+        shell: bash
+        run: |
+          npm run start > /tmp/stockflow-next.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          for i in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3000/api/health > /tmp/health.json; then
+              cat /tmp/health.json
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/stockflow-next.log
+          exit 1
 
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
