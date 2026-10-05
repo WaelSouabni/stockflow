@@ -81,11 +81,17 @@ jobs:
           for i in {1..30}; do
             if curl --fail --silent http://127.0.0.1:3000/api/health > /tmp/health.json; then
               cat /tmp/health.json
+              kill "$SERVER_PID" 2>/dev/null || true
+              wait "$SERVER_PID" 2>/dev/null || true
+              trap - EXIT
               exit 0
             fi
             sleep 2
           done
           cat /tmp/stockflow-next.log
+          kill "$SERVER_PID" 2>/dev/null || true
+          wait "$SERVER_PID" 2>/dev/null || true
+          trap - EXIT
           exit 1
 
       - name: Install Playwright browser
