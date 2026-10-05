@@ -1,11 +1,3 @@
-import { prisma } from "@/lib/prisma";
-import { calculateNextStock, calculateStockDelta } from "@/lib/stock-calculations";
-
-export async function recordStockMovement(data: { productId: string; type: "IN" | "OUT" | "ADJUSTMENT"; quantity: number; reason?: string }) {
-  return prisma.$transaction(async tx => {
-    const p = await tx.product.findUniqueOrThrow({ where: { id: data.productId } });
-    const next = calculateNextStock(data.type, data.quantity, p.stock);
-    await tx.product.update({ where: { id: p.id }, data: { stock: next } });
-    return tx.stockMovement.create({ data: { productId: p.id, type: data.type, quantity: Math.abs(calculateStockDelta(data.type, data.quantity, p.stock)), reason: data.reason } });
-  });
-}
+import {prisma} from "@/lib/prisma"; import {calculateNextStock,calculateStockDelta} from "@/lib/stock-calculations";
+export async function recordStockMovement(data:{productId:string;type:"IN"|"OUT"|"ADJUSTMENT";quantity:number;reason?:string}){return prisma.$transaction(async tx=>{const p=await tx.product.findUniqueOrThrow({where:{id:data.productId}});const next=calculateNextStock(data.type,data.quantity,p.stock);await tx.product.update({where:{id:p.id},data:{stock:next}});return tx.stockMovement.create({data:{productId:p.id,type:data.type,quantity:Math.abs(calculateStockDelta(data.type,data.quantity,p.stock)),reason:data.reason||undefined}});});}
+export async function listStockMovements(){return prisma.stockMovement.findMany({include:{product:{select:{name:true,sku:true}},variant:{select:{name:true,sku:true}}},orderBy:{createdAt:"desc"},take:100});}
