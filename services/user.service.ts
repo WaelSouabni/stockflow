@@ -1,0 +1,1 @@
+import {prisma} from "@/lib/prisma"; export async function listUsers(){return prisma.user.findMany({select:{id:true,name:true,email:true,role:true,active:true,createdAt:true},orderBy:{createdAt:"asc"}})} export async function updateUserRole(id:string,role:"ADMIN"|"MANAGER"|"USER"){return prisma.user.update({where:{id},data:{role}})}
