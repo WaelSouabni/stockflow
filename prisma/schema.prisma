@@ -32,6 +32,15 @@ enum UserRole {
   USER
 }
 
+model LoginRateLimit {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  attempts    Int      @default(0)
+  windowStart DateTime
+  blockedUntil DateTime?
+  updatedAt   DateTime @updatedAt
+}
+
 model Company {
   id              String            @id @default(cuid())
   name            String

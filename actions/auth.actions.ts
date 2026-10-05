@@ -1,5 +1,42 @@
-"use server"; import {redirect} from "next/navigation"; import {registerUser,loginUser,logoutUser} from "@/lib/auth"; import {z} from "zod";
-const schema=z.object({email:z.string().email(),password:z.string().min(8),name:z.string().min(2).optional()});
-export async function loginAction(formData:FormData){const p=schema.pick({email:true,password:true}).safeParse(Object.fromEntries(formData));if(!p.success)throw new Error("Identifiants invalides.");await loginUser(p.data.email,p.data.password);redirect("/dashboard");}
-export async function registerAction(formData:FormData){const p=schema.safeParse(Object.fromEntries(formData));if(!p.success)throw new Error("Données d'inscription invalides.");await registerUser(p.data.name!,p.data.email,p.data.password);await loginUser(p.data.email,p.data.password);redirect("/dashboard");}
-export async function logoutAction(){await logoutUser();redirect("/login");}
+"use server";
+
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { registerUser, loginUser, logoutUser } from "@/lib/auth";
+import { z } from "zod";
+
+const schema = z.object({
+  email: z.string().trim().email().max(254),
+  password: z.string().min(8).max(128),
+  name: z.string().trim().min(2).max(120).optional(),
+});
+
+function getClientAddress() {
+  const h = headers();
+  const forwarded = h.get("x-forwarded-for");
+  return forwarded?.split(",")[0]?.trim() || h.get("x-real-ip") || "unknown";
+}
+
+export async function loginAction(formData: FormData) {
+  const parsed = schema.pick({ email: true, password: true }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) throw new Error("Identifiants invalides.");
+
+  const email = parsed.data.email.toLowerCase();
+  const rateLimitKey = `login:${getClientAddress()}:${email}`;
+  await loginUser(email, parsed.data.password, rateLimitKey);
+  redirect("/dashboard");
+}
+
+export async function registerAction(formData: FormData) {
+  const parsed = schema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success || !parsed.data.name) throw new Error("Données d'inscription invalides.");
+
+  await registerUser(parsed.data.name, parsed.data.email, parsed.data.password);
+  await loginUser(parsed.data.email, parsed.data.password, `login:${getClientAddress()}:${parsed.data.email.toLowerCase()}`);
+  redirect("/dashboard");
+}
+
+export async function logoutAction() {
+  await logoutUser();
+  redirect("/login");
+}
