@@ -49,7 +49,7 @@ jobs:
         run: npm install --no-audit --no-fund
 
       - name: Validate environment
-        run: npm run env:check
+        run: NODE_ENV=production npm run env:check
 
       - name: Generate Prisma Client
         run: npm run prisma:generate
