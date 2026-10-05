@@ -32,6 +32,20 @@ enum UserRole {
   USER
 }
 
+model Company {
+  id              String            @id @default(cuid())
+  name            String
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  users           User[]
+  products        Product[]
+  customers       Customer[]
+  invoices        Invoice[]
+  stockMovements  StockMovement[]
+  settings        CompanySettings?
+  invoiceSequences InvoiceSequence[]
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -39,13 +53,18 @@ model User {
   passwordHash  String
   role          UserRole  @default(USER)
   active        Boolean   @default(true)
+  companyId     String
+  company       Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  @@index([companyId])
 }
 
 model Product {
   id          String           @id @default(cuid())
-  sku         String           @unique
+  companyId   String
+  company     Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  sku         String
   name        String
   description String?
   category    String?
@@ -60,25 +79,33 @@ model Product {
   invoiceItems InvoiceItem[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
+  @@unique([companyId, sku])
+  @@index([companyId, createdAt])
 }
 
 model ProductVariant {
   id         String          @id @default(cuid())
+  companyId  String
+  company    Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
   productId  String
-  sku        String          @unique
+  product    Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku        String
   name       String
   size       String?
   color      String?
   stock      Int             @default(0)
   minStock   Int             @default(0)
-  product    Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
   movements  StockMovement[]
   createdAt  DateTime        @default(now())
   updatedAt  DateTime        @updatedAt
+  @@unique([companyId, sku])
+  @@index([companyId, productId])
 }
 
 model StockMovement {
   id         String             @id @default(cuid())
+  companyId  String
+  company    Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
   type       StockMovementType
   quantity   Int
   reason     String?
@@ -87,10 +114,14 @@ model StockMovement {
   product    Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
   variant    ProductVariant?    @relation(fields: [variantId], references: [id], onDelete: SetNull)
   createdAt  DateTime           @default(now())
+  @@index([companyId, createdAt])
+  @@index([companyId, productId])
 }
 
 model Customer {
   id         String    @id @default(cuid())
+  companyId  String
+  company    Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   name       String
   email      String?
   phone      String?
@@ -102,11 +133,14 @@ model Customer {
   invoices   Invoice[]
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
+  @@index([companyId, createdAt])
 }
 
 model Invoice {
   id         String        @id @default(cuid())
-  number     String        @unique
+  companyId  String
+  company    Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  number     String
   type       InvoiceType   @default(INVOICE)
   status     InvoiceStatus @default(DRAFT)
   customerId String
@@ -123,6 +157,9 @@ model Invoice {
   items      InvoiceItem[]
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
+  @@unique([companyId, number])
+  @@index([companyId, type, issueDate])
+  @@index([companyId, status])
 }
 
 model InvoiceItem {
@@ -136,10 +173,13 @@ model InvoiceItem {
   total       Decimal  @db.Decimal(12, 2)
   invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  @@index([invoiceId])
 }
 
 model CompanySettings {
-  id                   String  @id @default(cuid())
+  id                   String   @id @default(cuid())
+  companyId            String   @unique
+  company              Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   companyName          String
   logoUrl              String?
   address              String?
@@ -154,18 +194,21 @@ model CompanySettings {
   bankName             String?
   iban                 String?
   bic                  String?
-  currency             String  @default("EUR")
-  locale               String  @default("fr-FR")
-  invoicePrefix        String  @default("FAC")
-  invoiceNumberPadding Int     @default(4)
-  defaultTaxRate       Decimal @db.Decimal(5, 2) @default(20)
-  updatedAt             DateTime @updatedAt
+  currency             String   @default("EUR")
+  locale               String   @default("fr-FR")
+  invoicePrefix        String   @default("FAC")
+  invoiceNumberPadding Int      @default(4)
+  defaultTaxRate       Decimal  @db.Decimal(5, 2) @default(20)
+  updatedAt            DateTime @updatedAt
 }
 
 model InvoiceSequence {
   id           String      @id @default(cuid())
+  companyId    String
+  company      Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
   year         Int
   documentType InvoiceType
   lastNumber   Int         @default(0)
-  @@unique([year, documentType])
+  @@unique([companyId, year, documentType])
+  @@index([companyId])
 }
