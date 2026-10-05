@@ -1,0 +1,58 @@
+name: StockFlow CI
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+    branches: [master, develop]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: stockflow
+          POSTGRES_USER: stockflow
+          POSTGRES_PASSWORD: stockflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U stockflow -d stockflow"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgresql://stockflow:stockflow@localhost:5432/stockflow?schema=public
+      AUTH_SECRET: ci-only-stockflow-secret
+      NEXT_TELEMETRY_DISABLED: 1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate Prisma Client
+        run: npm run prisma:generate
+
+      - name: Validate Prisma schema
+        run: npx prisma validate
+
+      - name: Apply Prisma schema
+        run: npx prisma db push
+
+      - name: TypeScript
+        run: npm run typecheck
+
+      - name: Next.js production build
+        run: npm run build
