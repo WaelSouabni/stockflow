@@ -32,3 +32,13 @@ test("a new company is onboarded and cannot see another tenant's product", async
   await expect(page.getByText("Laptop Pro 14")).not.toBeVisible();
   await expect(page.getByText("LAP-001")).not.toBeVisible();
 });
+
+test("regular users do not get admin navigation", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByLabel("Email professionnel").fill("user@stockflow.test");
+  await page.getByLabel("Mot de passe").fill("StockFlow123!");
+  await page.getByRole("button", { name: "Se connecter" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page.getByRole("link", { name: "Entreprise" })).not.toBeVisible();
+  await expect(page.getByRole("link", { name: "Utilisateurs" })).not.toBeVisible();
+});
