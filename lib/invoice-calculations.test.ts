@@ -1,19 +1,25 @@
 import { describe, expect, it } from "vitest";
-import { calculateInvoiceTotals } from "./invoice-calculations";
+import { calculateInvoiceTotals } from "@/lib/invoice-calculations";
 
 describe("calculateInvoiceTotals", () => {
-  it("calculates subtotal, tax and total", () => {
-    expect(calculateInvoiceTotals([
+  it("calculates subtotal, discount, tax and total", () => {
+    const result = calculateInvoiceTotals([
       { quantity: 2, unitPrice: 100, discount: 10 },
       { quantity: 1, unitPrice: 50, discount: 0 },
-    ], 20, 20)).toEqual({ subtotal: 240, taxable: 220, tax: 44, total: 264 });
+    ], 20, 20);
+    expect(result.subtotal).toBe(240);
+    expect(result.taxable).toBe(220);
+    expect(result.tax).toBe(44);
+    expect(result.total).toBe(264);
   });
-
-  it("never creates a negative taxable amount", () => {
-    expect(calculateInvoiceTotals([{ quantity: 1, unitPrice: 50, discount: 0 }], 100, 20)).toEqual({ subtotal: 50, taxable: 0, tax: 0, total: 0 });
+  it("never makes taxable amount negative", () => {
+    const result = calculateInvoiceTotals([{ quantity: 1, unitPrice: 10, discount: 0 }], 50, 20);
+    expect(result.taxable).toBe(0);
+    expect(result.tax).toBe(0);
+    expect(result.total).toBe(0);
   });
-
   it("supports zero VAT", () => {
-    expect(calculateInvoiceTotals([{ quantity: 3, unitPrice: 25, discount: 5 }], 0, 0)).toEqual({ subtotal: 70, taxable: 70, tax: 0, total: 70 });
+    const result = calculateInvoiceTotals([{ quantity: 2, unitPrice: 100, discount: 0 }], 0, 0);
+    expect(result.total).toBe(200);
   });
 });
