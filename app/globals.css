@@ -7,3 +7,5 @@
 * { box-sizing: border-box; }
 body { margin:0; background:#f8fafc; color:#0f172a; font-family:Arial,Helvetica,sans-serif; }
 .dark body { background:#020617; color:#e2e8f0; }
+
+.dark body{background:#0b1120;color:#e2e8f0}.dark nav,.dark article,.dark section,.dark form,.dark .bg-white{background:#111827!important;border-color:#334155}.dark .bg-slate-50,.dark .bg-slate-50\/70{background:#0f172a!important}.dark input,.dark select{background:#0f172a;color:#e2e8f0;border-color:#334155}
