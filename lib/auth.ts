@@ -6,6 +6,7 @@ import { assertLoginAllowed, clearLoginFailures, recordLoginFailure } from "@/li
 
 const secretValue = process.env.AUTH_SECRET;
 if (!secretValue && process.env.NODE_ENV === "production") throw new Error("AUTH_SECRET est requis en production.");
+if (secretValue && process.env.NODE_ENV === "production" && secretValue.length < 32) throw new Error("AUTH_SECRET doit contenir au moins 32 caractères en production.");
 const secret = new TextEncoder().encode(secretValue || "development-secret-change-me");
 
 type Role = "ADMIN" | "MANAGER" | "USER";
