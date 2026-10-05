@@ -1,0 +1,2 @@
+import { InvoiceForm } from "@/components/invoices/invoice-form";
+export default function NewInvoicePage(){return <main className="min-h-screen p-6 md:p-10"><div className="mx-auto max-w-6xl"><h1 className="text-3xl font-bold">Nouvelle facture</h1><p className="mt-1 text-slate-500">Préparez une facture avec calcul automatique des totaux.</p><div className="mt-8"><InvoiceForm/></div></div></main>}
