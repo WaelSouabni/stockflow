@@ -1,0 +1,5 @@
+"use server"; import {redirect} from "next/navigation"; import {registerUser,loginUser,logoutUser} from "@/lib/auth"; import {z} from "zod";
+const schema=z.object({email:z.string().email(),password:z.string().min(8),name:z.string().min(2).optional()});
+export async function loginAction(formData:FormData){const p=schema.pick({email:true,password:true}).safeParse(Object.fromEntries(formData));if(!p.success)throw new Error("Identifiants invalides.");await loginUser(p.data.email,p.data.password);redirect("/dashboard");}
+export async function registerAction(formData:FormData){const p=schema.safeParse(Object.fromEntries(formData));if(!p.success)throw new Error("Données d'inscription invalides.");await registerUser(p.data.name!,p.data.email,p.data.password);await loginUser(p.data.email,p.data.password);redirect("/dashboard");}
+export async function logoutAction(){await logoutUser();redirect("/login");}
