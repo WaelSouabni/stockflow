@@ -1,4 +1,13 @@
 import { listProducts } from "@/services/product.service";
+import { createProductAction } from "@/actions/product.actions"; import {ProductList} from "@/components/products/product-list";
+export default async function ProductsPage(){
+ const products=await listProducts();
+ return <main className="min-h-screen p-6 md:p-10"><div className="mx-auto max-w-7xl">
+ <header><p className="text-sm font-medium text-blue-600">Catalogue</p><h1 className="text-3xl font-bold">Produits</h1><p className="mt-1 text-slate-500">Produits, variantes et niveaux de stock.</p></header>
+ <form action={createProductAction} className="mt-6 grid gap-3 rounded-2xl border bg-white p-5 md:grid-cols-6">
+ {["sku","name","price","costPrice","stock","minStock"].map((n)=><input key={n} name={n} required={["sku","name"].includes(n)} type={["price","costPrice","stock","minStock"].includes(n)?"number":"text"} step={["price","costPrice"].includes(n)?".01":undefined} placeholder={n==="costPrice"?"Coût":n==="minStock"?"Seuil":n==="sku"?"SKU":n==="name"?"Nom":n} className="rounded-lg border p-2"/>)} 
+ <button className="rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white md:col-span-6">Ajouter le produit</button></form>
+ <div className="mt-6"><ProductList products={products}/></div></main></div>stProducts } from "@/services/product.service";
 import { createProductAction,deleteProductAction,createVariantAction } from "@/actions/product.actions";
 export default async function ProductsPage(){
  const products=await listProducts();
