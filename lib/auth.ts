@@ -3,11 +3,10 @@ import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { assertLoginAllowed, clearLoginFailures, recordLoginFailure } from "@/lib/login-rate-limit";
+import { validateServerEnv } from "@/lib/env";
 
-const secretValue = process.env.AUTH_SECRET;
-if (!secretValue && process.env.NODE_ENV === "production") throw new Error("AUTH_SECRET est requis en production.");
-if (secretValue && process.env.NODE_ENV === "production" && secretValue.length < 32) throw new Error("AUTH_SECRET doit contenir au moins 32 caractères en production.");
-const secret = new TextEncoder().encode(secretValue || "development-secret-change-me");
+const { authSecret } = validateServerEnv();
+const secret = new TextEncoder().encode(authSecret || "development-secret-change-me");
 
 type Role = "ADMIN" | "MANAGER" | "USER";
 
@@ -51,8 +50,13 @@ export async function loginUser(email: string, password: string, rateLimitKey?: 
   await assertLoginAllowed(key);
 
   const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
-  const valid = Boolean(user && user.active && (await bcrypt.compare(password, user.passwordHash)));
 
+  if (!user || !user.active) {
+    await recordLoginFailure(key);
+    throw new Error("Email ou mot de passe incorrect.");
+  }
+
+  const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) {
     await recordLoginFailure(key);
     throw new Error("Email ou mot de passe incorrect.");
