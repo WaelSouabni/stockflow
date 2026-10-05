@@ -28,3 +28,16 @@ UI → services/actions → Prisma → PostgreSQL. Les montants financiers sont 
 ## Branches
 - `master` : base du dépôt
 - `develop` : branche de développement active
+
+
+## Données de démonstration
+
+StockFlow inclut un seed Prisma réaliste pour tester le dashboard, le stock, les clients, les factures, les devis et les rôles.
+
+Commandes : npm install ; npm run prisma:generate ; npm run prisma:migrate ; npm run prisma:seed
+
+Le seed est destructif en développement : il nettoie les données existantes puis recrée un jeu cohérent.
+
+Comptes de démonstration : admin@stockflow.test / StockFlow123! ; manager@stockflow.test / StockFlow123! ; user@stockflow.test / StockFlow123!
+
+Ne pas utiliser ces identifiants en production.
