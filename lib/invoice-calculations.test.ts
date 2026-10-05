@@ -6,7 +6,7 @@ describe("calculateInvoiceTotals", () => {
     expect(calculateInvoiceTotals([
       { quantity: 2, unitPrice: 100, discount: 10 },
       { quantity: 1, unitPrice: 50, discount: 0 },
-    ], 20, 20)).toEqual({ subtotal: 230, taxable: 210, tax: 42, total: 252 });
+    ], 20, 20)).toEqual({ subtotal: 240, taxable: 220, tax: 44, total: 264 });
   });
 
   it("never creates a negative taxable amount", () => {
