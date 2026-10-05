@@ -1,15 +1,18 @@
 import Link from "next/link";
 import { registerAction } from "@/actions/auth.actions";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-8 dark:bg-slate-950">
       <section className="w-full max-w-md rounded-2xl border bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
         <p className="text-sm font-semibold text-blue-600">StockFlow</p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight">Créer votre espace</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Votre entreprise et votre compte administrateur seront créés ensemble.</p>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Créez votre compte administrateur puis configurez votre entreprise.</p>
         <form action={registerAction} className="mt-6 space-y-4">
-          <label className="block text-sm font-medium">Nom
+          <label className="block text-sm font-medium">Nom de l’entreprise
+            <input name="companyName" required minLength={2} maxLength={150} autoComplete="organization" className="mt-1 w-full rounded-lg border bg-transparent p-3" />
+          </label>
+          <label className="block text-sm font-medium">Votre nom
             <input name="name" required minLength={2} maxLength={120} autoComplete="name" className="mt-1 w-full rounded-lg border bg-transparent p-3" />
           </label>
           <label className="block text-sm font-medium">Email professionnel
