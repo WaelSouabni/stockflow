@@ -85,18 +85,18 @@ async function main() {
   ];
 
   const customers = [];
-  for (const [name, email, phone, city, zip] of customerData) {
+  for (const [index, [name, email, phone, city, zip]] of customerData.entries()) {
     customers.push(
       await prisma.customer.create({
         data: {
           name,
           email,
           phone,
-          address: `${Math.floor(Math.random() * 80) + 1} avenue de la Liberté`,
+          address: `${index + 1} avenue de la Liberté`,
           city,
           zip,
           country: "France",
-          taxNumber: `FR${Math.floor(10_000_000_000 + Math.random() * 89_999_999_999)}`,
+          taxNumber: `FR1234567890${String(index + 1).padStart(2, "0")}`,
         },
       }),
     );
