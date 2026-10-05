@@ -1,6 +1,10 @@
 import {prisma} from "@/lib/prisma"; import bcrypt from "bcryptjs"; import {SignJWT,jwtVerify} from "jose"; import {cookies} from "next/headers";
-const secret=new TextEncoder().encode(process.env.AUTH_SECRET||"development-secret-change-me");
+const secretValue=process.env.AUTH_SECRET;
+if(!secretValue && process.env.NODE_ENV==="production") throw new Error("AUTH_SECRET est requis en production.");
+const secret=new TextEncoder().encode(secretValue||"development-secret-change-me");
+type Role="ADMIN"|"MANAGER"|"USER";
 export async function registerUser(name:string,email:string,password:string){const count=await prisma.user.count();const existing=await prisma.user.findUnique({where:{email}});if(existing)throw new Error("Cet email est déjà utilisé.");if(password.length<8)throw new Error("Le mot de passe doit contenir au moins 8 caractères.");const passwordHash=await bcrypt.hash(password,12);return prisma.user.create({data:{name,email,passwordHash,role:count===0?"ADMIN":"USER"}});}
 export async function loginUser(email:string,password:string){const user=await prisma.user.findUnique({where:{email}});if(!user||!user.active||!(await bcrypt.compare(password,user.passwordHash)))throw new Error("Email ou mot de passe incorrect.");const token=await new SignJWT({sub:user.id,role:user.role,email:user.email,name:user.name}).setProtectedHeader({alg:"HS256"}).setIssuedAt().setExpirationTime("7d").sign(secret);cookies().set("stockflow_session",token,{httpOnly:true,sameSite:"lax",secure:process.env.NODE_ENV==="production",maxAge:60*60*24*7,path:"/"});}
 export async function logoutUser(){cookies().delete("stockflow_session");}
-export async function getSession(){const token=cookies().get("stockflow_session")?.value;if(!token)return null;try{return (await jwtVerify(token,secret)).payload as {sub:string;role:"ADMIN"|"MANAGER"|"USER";email:string;name?:string}}catch{return null;}}
+export async function getSession(){const token=cookies().get("stockflow_session")?.value;if(!token)return null;try{return (await jwtVerify(token,secret)).payload as {sub:string;role:Role;email:string;name?:string}}catch{return null;}}
+export async function requireRole(...roles:Role[]){const session=await getSession();if(!session||!roles.includes(session.role))throw new Error("Accès non autorisé.");return session;}
