@@ -45,14 +45,14 @@ export async function listInvoices(type:"INVOICE"|"QUOTE"="INVOICE"){
   return prisma.invoice.findMany({where:{companyId,type},include:{customer:true,items:true},orderBy:{issueDate:"desc"}});
 }
 
-const transitions:Record<string,string[]>={DRAFT:["SENT","CANCELLED"],SENT:["PAID","OVERDUE","CANCELLED"],OVERDUE:["PAID","CANCELLED"],PAID:[],CANCELLED:[]};
+export const INVOICE_STATUS_TRANSITIONS: Record<string, string[]>={DRAFT:["SENT","CANCELLED"],SENT:["PAID","OVERDUE","CANCELLED"],OVERDUE:["PAID","CANCELLED"],PAID:[],CANCELLED:[]};
 
 export async function updateInvoiceStatus(id:string,status:"DRAFT"|"SENT"|"PAID"|"OVERDUE"|"CANCELLED"){
   const {companyId}=await requireTenant();
   const current=await prisma.invoice.findFirst({where:{id,companyId},select:{status:true}});
   if(!current) throw new Error("Document introuvable.");
   if(current.status===status) return;
-  if(!transitions[current.status]?.includes(status)) throw new Error(`Transition de statut invalide : ${current.status} → ${status}`);
+  if(!INVOICE_STATUS_TRANSITIONS[current.status]?.includes(status)) throw new Error(`Transition de statut invalide : ${current.status} → ${status}`);
   const result=await prisma.invoice.updateMany({where:{id,companyId,status:current.status},data:{status}});
   if(result.count!==1) throw new Error("Le document a été modifié entre-temps. Veuillez réessayer.");
   return prisma.invoice.findFirst({where:{id,companyId}});
