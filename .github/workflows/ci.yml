@@ -17,7 +17,7 @@ jobs:
           POSTGRES_USER: stockflow
           POSTGRES_PASSWORD: stockflow
         ports:
-          - 5432:5432
+          - "5432:5432"
         options: >-
           --health-cmd "pg_isready -U stockflow -d stockflow"
           --health-interval 5s
@@ -32,38 +32,29 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
       - name: Install dependencies
         run: npm install
-
       - name: Generate Prisma Client
         run: npm run prisma:generate
-
       - name: Validate Prisma schema
         run: npx prisma validate
-
-      - name: Apply Prisma schema
-        run: npx prisma db push
-
+      - name: Apply Prisma migrations
+        run: npx prisma migrate deploy
+      - name: Check migration status
+        run: npx prisma migrate status
       - name: Seed test database
         run: npm run prisma:seed
-
       - name: Unit tests
         run: npm test
-
       - name: TypeScript
         run: npm run typecheck
-
       - name: Next.js production build
         run: npm run build
-
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
-
       - name: End-to-end tests
         run: npm run test:e2e
