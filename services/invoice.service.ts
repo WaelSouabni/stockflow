@@ -14,6 +14,13 @@ export async function createInvoice(input: InvoiceInput) {
     const customer = await tx.customer.findUnique({ where: { id: input.customerId }, select: { id: true } });
     if (!customer) throw new Error("Client introuvable.");
 
+    for (const item of input.items) {
+      if (item.productId) {
+        const product = await tx.product.findUnique({ where: { id: item.productId }, select: { id: true } });
+        if (!product) throw new Error("Produit introuvable.");
+      }
+    }
+
     const settings = await tx.companySettings.findFirst();
     const year = new Date().getFullYear();
     const type = input.type ?? "INVOICE";
@@ -71,7 +78,9 @@ export async function updateInvoiceStatus(id: string, status: "DRAFT" | "SENT" |
   if (!current) throw new Error("Document introuvable.");
   if (current.status === status) return;
   if (!transitions[current.status]?.includes(status)) throw new Error(`Transition de statut invalide : ${current.status} → ${status}`);
-  return prisma.invoice.update({ where: { id }, data: { status } });
+  const result = await prisma.invoice.updateMany({ where: { id, status: current.status }, data: { status } });
+  if (result.count !== 1) throw new Error("Le document a été modifié entre-temps. Veuillez réessayer.");
+  return prisma.invoice.findUnique({ where: { id } });
 }
 
 export async function getInvoice(id: string) {
