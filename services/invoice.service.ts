@@ -13,7 +13,6 @@ export async function createInvoice(input: InvoiceInput) {
     const seq = await tx.invoiceSequence.upsert({ where: { year_documentType: { year, documentType: type } }, create: { year, documentType: type, lastNumber: 1 }, update: { lastNumber: { increment: 1 } } });
     const number = `${prefix}-${year}-${String(seq.lastNumber).padStart(padding, "0")}`;
     const { subtotal, tax, total } = calculateInvoiceTotals(input.items, input.discount, input.taxRate);
-    const taxable = Math.max(0, subtotal - input.discount);
     return tx.invoice.create({ data: { number, customerId: input.customerId, type, status: "DRAFT", subtotal, discount: input.discount, taxRate: input.taxRate, taxAmount: tax, total, currency: settings?.currency || "EUR", items: { create: input.items.map(i => ({ description: i.description, quantity: i.quantity, unitPrice: i.unitPrice, discount: i.discount, total: i.quantity * i.unitPrice - i.discount, productId: i.productId })) } } });
   });
 }
