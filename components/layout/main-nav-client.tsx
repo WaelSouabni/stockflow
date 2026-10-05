@@ -5,6 +5,7 @@ import { Menu, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { logoutAction } from "@/actions/auth.actions";
 
 type Props = { session: { role: "ADMIN" | "MANAGER" | "USER"; name?: string; email: string } | null };
 
@@ -34,9 +35,11 @@ export function MainNavClient({ session }: Props) {
             <Link key={link.href} href={link.href} className={"rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 " + (pathname === link.href ? "bg-slate-100 text-slate-950 dark:bg-slate-800 dark:text-white" : "text-slate-600 dark:text-slate-300")}>{link.label}</Link>
           ))}
           <ThemeToggle />
+          {session && <form action={logoutAction}><button type="submit" className="rounded-lg border px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Déconnexion</button></form>}
         </div>
         <div className="ml-auto flex items-center gap-2 lg:hidden">
           <ThemeToggle />
+          {session && <form action={logoutAction}><button type="submit" className="hidden rounded-lg border px-3 py-2 text-sm font-medium sm:block">Déconnexion</button></form>}
           <button type="button" aria-expanded={open} aria-controls="stockflow-mobile-nav" aria-label={open ? "Fermer le menu" : "Ouvrir le menu"} onClick={() => setOpen(value => !value)} className="rounded-lg border p-2 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
             {open ? <X size={20} /> : <Menu size={20} />}
           </button>
