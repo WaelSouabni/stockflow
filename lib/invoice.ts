@@ -1,0 +1,3 @@
+export type InvoiceItemInput = { quantity:number; unitPrice:number; discount:number };
+export function calculateInvoiceTotals(items:InvoiceItemInput[], taxRate:number, globalDiscount=0){const subtotal=items.reduce((s,i)=>s+i.quantity*i.unitPrice-i.discount,0);const taxable=Math.max(0,subtotal-globalDiscount);const tax=taxable*(taxRate/100);return {subtotal,discount:globalDiscount,taxAmount:tax,total:taxable+tax};}
+export function formatCurrency(amount:number,currency="EUR",locale="fr-FR"){return new Intl.NumberFormat(locale,{style:"currency",currency}).format(amount);}
