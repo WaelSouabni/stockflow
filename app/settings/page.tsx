@@ -6,7 +6,7 @@ import Link from "next/link";
 export default async function Settings() {
   await requireRole("ADMIN");
   const s = await getSettings();
-  const field = (label: string, name: string, value?: string | number, type = "text") => (
+  const field = (label: string, name: string, value?: string | number | null, type = "text") => (
     <label key={name} className="text-sm font-medium">{label}<input type={type} name={name} defaultValue={value ?? ""} className="mt-1 w-full rounded-lg border bg-white p-2" /></label>
   );
   return (
