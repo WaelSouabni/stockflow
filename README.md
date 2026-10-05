@@ -11,36 +11,66 @@ Application SaaS moderne de gestion de stock et de facturation.
 - Docker Compose pour PostgreSQL local
 
 ## Démarrage
+
 ```bash
 docker compose up -d
 cp .env.example .env
 npm install
-npx prisma generate
-npx prisma migrate dev --name init
+npm run prisma:generate
+npm run prisma:migrate
+npm run prisma:seed
 npm run dev
 ```
 
 Puis ouvrir http://localhost:3000.
 
 ## Architecture
-UI → services/actions → Prisma → PostgreSQL. Les montants financiers sont modélisés avec Prisma Decimal. La numérotation des factures devra être générée côté serveur dans une transaction via InvoiceSequence.
+
+UI → services/actions → Prisma → PostgreSQL. Les montants financiers sont modélisés avec Prisma Decimal. La numérotation des factures est générée côté serveur dans une transaction via InvoiceSequence.
 
 ## Branches
+
 - `master` : base du dépôt
 - `develop` : branche de développement active
-
 
 ## Données de démonstration
 
 StockFlow inclut un seed Prisma réaliste pour tester le dashboard, le stock, les clients, les factures, les devis et les rôles.
 
-Commandes : npm install ; npm run prisma:generate ; npm run prisma:migrate ; npm run prisma:seed
+Le seed est destiné au développement/test et ne doit jamais être exécuté contre une base de production.
 
-Le seed est destructif en développement : il nettoie les données existantes puis recrée un jeu cohérent.
-
-Comptes de démonstration : admin@stockflow.test / StockFlow123! ; manager@stockflow.test / StockFlow123! ; user@stockflow.test / StockFlow123!
+Comptes de démonstration :
+- admin@stockflow.test / StockFlow123!
+- manager@stockflow.test / StockFlow123!
+- user@stockflow.test / StockFlow123!
 
 Ne pas utiliser ces identifiants en production.
+
+## Production
+
+La préparation production comprend :
+- migrations Prisma versionnées et déployées avec `prisma migrate deploy`
+- validation des variables d'environnement
+- CI avec PostgreSQL réel et migrations
+- endpoint `/api/health`
+- scripts de backup/restore PostgreSQL
+- documentation de déploiement et monitoring
+
+Voir :
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+- [docs/MONITORING.md](docs/MONITORING.md)
+
+## Vérifications locales
+
+```bash
+npm run env:check
+npm run prisma:generate
+npm run prisma:migrate
+npm test
+npm run typecheck
+npm run build
+npm run test:e2e
+```
 
 ## Emails transactionnels
 
