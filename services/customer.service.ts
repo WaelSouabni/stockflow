@@ -1,0 +1,1 @@
+import { prisma } from "@/lib/prisma"; export async function listCustomers(){return prisma.customer.findMany({orderBy:{createdAt:"desc"}})} export async function createCustomer(data:{name:string;email?:string;phone?:string}){return prisma.customer.create({data})}
