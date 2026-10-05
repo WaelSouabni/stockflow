@@ -28,7 +28,7 @@ export default async function Dashboard({ searchParams }: Props) {
             <h1 className="mt-1 text-3xl font-bold tracking-tight">Dashboard</h1>
             <p className="mt-1 text-sm text-slate-500">Suivez la santé de votre stock et votre activité commerciale.</p>
           </div>
-          <div className="flex rounded-xl border bg-white p-1 shadow-sm">
+          <div className="flex rounded-xl border bg-white p-1 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             {periods.map((item) => (
               <Link
                 key={item.value}
@@ -42,7 +42,7 @@ export default async function Dashboard({ searchParams }: Props) {
         </header>
 
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Link href="/stock" className="rounded-2xl border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+          <Link href="/stock" className="rounded-2xl border bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 transition hover:-translate-y-0.5 hover:shadow-md">
             <p className="text-sm text-slate-500">Valeur du stock</p>
             <p className="mt-2 text-2xl font-bold">{formatCurrency(d.stockValue, locale, currency)}</p>
             <p className="mt-1 text-xs text-slate-400">Au prix de revient</p>
@@ -76,7 +76,7 @@ export default async function Dashboard({ searchParams }: Props) {
               {d.lowStockProducts.length ? d.lowStockProducts.map((product) => (
                 <div key={product.id} className="flex items-center justify-between gap-4 py-3">
                   <div className="min-w-0"><p className="truncate font-medium">{product.name}</p><p className="text-xs text-slate-500">Seuil : {product.minStock}</p></div>
-                  <span className="shrink-0 rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700">{product.stock} en stock</span>
+                  <span className="shrink-0 rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 dark:bg-red-950/40 dark:text-red-300">{product.stock} en stock</span>
                 </div>
               )) : <p className="py-8 text-center text-sm text-slate-500">Aucune alerte stock.</p>}
             </div>
@@ -105,7 +105,7 @@ export default async function Dashboard({ searchParams }: Props) {
           </div>
           <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {d.movements.slice(0, 9).map((movement) => (
-              <div key={movement.id} className="rounded-xl border p-3">
+              <div key={movement.id} className="rounded-xl border p-3 dark:border-slate-800">
                 <div className="flex items-center justify-between gap-3"><span className="text-sm font-medium">{movement.product.name}</span><span className="text-xs font-semibold">{movement.type}</span></div>
                 <div className="mt-1 flex justify-between text-xs text-slate-500"><span>{new Date(movement.createdAt).toLocaleDateString(locale)}</span><span>{movement.quantity}</span></div>
               </div>
