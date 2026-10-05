@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { assertLoginAllowed, clearLoginFailures, recordLoginFailure } from "@/lib/login-rate-limit";
 
 const secretValue = process.env.AUTH_SECRET;
 if (!secretValue && process.env.NODE_ENV === "production") throw new Error("AUTH_SECRET est requis en production.");
@@ -17,38 +18,44 @@ type Session = {
   name?: string;
 };
 
+const SESSION_COOKIE = "stockflow_session";
+
 export async function registerUser(name: string, email: string, password: string) {
-  const existing = await prisma.user.findUnique({ where: { email } });
+  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedName = name.trim();
+  if (normalizedName.length < 2 || normalizedName.length > 120) throw new Error("Nom invalide.");
+  if (password.length < 8 || password.length > 128) throw new Error("Mot de passe invalide.");
+
+  const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
   if (existing) throw new Error("Cet email est déjà utilisé.");
-  if (password.length < 8) throw new Error("Le mot de passe doit contenir au moins 8 caractères.");
 
   const passwordHash = await bcrypt.hash(password, 12);
   return prisma.$transaction(async tx => {
-    const company = await tx.company.create({
-      data: { name: "Mon entreprise" },
-    });
-
+    const company = await tx.company.create({ data: { name: "Mon entreprise" } });
     await tx.companySettings.create({
-      data: {
-        companyId: company.id,
-        companyName: "Mon entreprise",
-        email,
-      },
+      data: { companyId: company.id, companyName: "Mon entreprise", email: normalizedEmail },
     });
-
-    const user = await tx.user.create({
-      data: { name, email, passwordHash, role: "ADMIN", companyId: company.id },
+    return tx.user.create({
+      data: { name: normalizedName, email: normalizedEmail, passwordHash, role: "ADMIN", companyId: company.id },
     });
-
-    return user;
   });
 }
 
-export async function loginUser(email: string, password: string) {
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user || !user.active || !(await bcrypt.compare(password, user.passwordHash))) {
+export async function loginUser(email: string, password: string, rateLimitKey?: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+  const key = rateLimitKey?.trim() || `email:${normalizedEmail}`;
+
+  await assertLoginAllowed(key);
+
+  const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+  const valid = Boolean(user && user.active && (await bcrypt.compare(password, user.passwordHash)));
+
+  if (!valid) {
+    await recordLoginFailure(key);
     throw new Error("Email ou mot de passe incorrect.");
   }
+
+  await clearLoginFailures(key);
 
   const token = await new SignJWT({
     sub: user.id,
@@ -62,7 +69,7 @@ export async function loginUser(email: string, password: string) {
     .setExpirationTime("7d")
     .sign(secret);
 
-  cookies().set("stockflow_session", token, {
+  cookies().set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
@@ -72,11 +79,11 @@ export async function loginUser(email: string, password: string) {
 }
 
 export async function logoutUser() {
-  cookies().delete("stockflow_session");
+  cookies().delete(SESSION_COOKIE);
 }
 
 export async function getSession(): Promise<Session | null> {
-  const token = cookies().get("stockflow_session")?.value;
+  const token = cookies().get(SESSION_COOKIE)?.value;
   if (!token) return null;
 
   try {
@@ -86,9 +93,7 @@ export async function getSession(): Promise<Session | null> {
       typeof payload.companyId !== "string" ||
       (payload.role !== "ADMIN" && payload.role !== "MANAGER" && payload.role !== "USER") ||
       typeof payload.email !== "string"
-    ) {
-      return null;
-    }
+    ) return null;
 
     return {
       sub: payload.sub,
@@ -104,6 +109,20 @@ export async function getSession(): Promise<Session | null> {
 
 export async function requireRole(...roles: Role[]) {
   const session = await getSession();
-  if (!session || !roles.includes(session.role)) throw new Error("Accès non autorisé.");
-  return session;
+  if (!session) throw new Error("Authentification requise.");
+
+  const user = await prisma.user.findFirst({
+    where: { id: session.sub, companyId: session.companyId, active: true },
+    select: { id: true, companyId: true, role: true, email: true, name: true },
+  });
+
+  if (!user || !roles.includes(user.role)) throw new Error("Accès non autorisé.");
+
+  return {
+    sub: user.id,
+    companyId: user.companyId,
+    role: user.role,
+    email: user.email,
+    name: user.name ?? undefined,
+  };
 }
