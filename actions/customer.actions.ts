@@ -1,0 +1,1 @@
+"use server"; import { revalidatePath } from "next/cache"; import { createCustomer } from "@/services/customer.service"; export async function createCustomerAction(formData:FormData){await createCustomer({name:String(formData.get("name")||""),email:String(formData.get("email")||"")||undefined,phone:String(formData.get("phone")||"")||undefined});revalidatePath("/customers")}
