@@ -1,0 +1,2 @@
+"use server"; import {revalidatePath} from "next/cache"; import {getSession} from "@/lib/auth"; import {updateUserRole} from "@/services/user.service"; import {z} from "zod";
+export async function updateUserRoleAction(id:string,role:"ADMIN"|"MANAGER"|"USER"){const session=await getSession();if(session?.role!=="ADMIN")throw new Error("Accès administrateur requis.");const p=z.enum(["ADMIN","MANAGER","USER"]).safeParse(role);if(!p.success)throw new Error("Rôle invalide.");await updateUserRole(id,p.data);revalidatePath("/settings/users");}
