@@ -1,13 +1,45 @@
-import {prisma} from "@/lib/prisma";
-export async function getDashboardData(){
- const [products,unpaid,invoices,movements]=await Promise.all([
-  prisma.product.findMany({select:{stock:true,costPrice:true,minStock:true,name:true}}),
-  prisma.invoice.aggregate({where:{status:{in:["SENT","OVERDUE"]}},_sum:{total:true}}),
-  prisma.invoice.findMany({select:{issueDate:true,total:true,status:true},orderBy:{issueDate:"asc"}}),
-  prisma.stockMovement.findMany({select:{createdAt:true,type:true,quantity:true},orderBy:{createdAt:"desc"},take:50})
- ]);
- const stockValue=products.reduce((s,p)=>s+p.stock*Number(p.costPrice),0); const alerts=products.filter(p=>p.stock<=p.minStock).length;
- const revenue=invoices.filter(i=>i.status==="PAID").reduce((s,i)=>s+Number(i.total),0);
- const monthly=Array.from({length:6},(_,index)=>{const d=new Date();d.setMonth(d.getMonth()-(5-index),1);const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;return {month:key,revenue:invoices.filter(i=>{const x=new Date(i.issueDate);return i.status==="PAID"&&`${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}`===key}).reduce((s,i)=>s+Number(i.total),0)}});
- return {stockValue,alerts,unpaid:Number(unpaid._sum.total??0),revenue,invoices,movements,monthly};
+import { prisma } from "@/lib/prisma";
+import { buildMonthlyRevenue, getPeriodStart, type DashboardPeriod } from "@/lib/dashboard-calculations";
+
+export async function getDashboardData(period: DashboardPeriod = 180) {
+  const startDate = getPeriodStart(period);
+  const [products, unpaid, invoices, movements, settings] = await Promise.all([
+    prisma.product.findMany({ select: { id: true, name: true, stock: true, costPrice: true, minStock: true } }),
+    prisma.invoice.aggregate({ where: { type: "INVOICE", status: { in: ["SENT", "OVERDUE"] } }, _count: { _all: true }, _sum: { total: true } }),
+    prisma.invoice.findMany({
+      where: { issueDate: { gte: startDate } },
+      select: { id: true, number: true, issueDate: true, total: true, status: true, currency: true, customer: { select: { name: true } } },
+      orderBy: { issueDate: "desc" },
+      take: 1000,
+    }),
+    prisma.stockMovement.findMany({
+      where: { createdAt: { gte: startDate } },
+      select: { id: true, createdAt: true, type: true, quantity: true, product: { select: { name: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    }),
+    prisma.companySettings.findFirst({ select: { currency: true, locale: true } }),
+  ]);
+
+  const stockValue = products.reduce((sum, product) => sum + product.stock * Number(product.costPrice), 0);
+  const lowStockProducts = products.filter((product) => product.stock <= product.minStock).sort((a, b) => a.stock - b.stock).slice(0, 8);
+  const revenue = invoices.filter((invoice) => invoice.status === "PAID").reduce((sum, invoice) => sum + Number(invoice.total), 0);
+  const invoiceCount = invoices.filter((invoice) => invoice.status !== "CANCELLED" && invoice.status !== "DRAFT").length;
+
+  return {
+    period,
+    stockValue,
+    alerts: lowStockProducts.length,
+    totalLowStock: products.filter((product) => product.stock <= product.minStock).length,
+    unpaidCount: unpaid._count._all,
+    unpaidAmount: Number(unpaid._sum.total ?? 0),
+    revenue,
+    invoiceCount,
+    monthly: buildMonthlyRevenue(invoices.map((invoice) => ({ issueDate: invoice.issueDate, total: Number(invoice.total), status: invoice.status })), period === 365 ? 12 : 6),
+    invoices,
+    movements,
+    lowStockProducts,
+    currency: settings?.currency ?? "EUR",
+    locale: settings?.locale ?? "fr-FR",
+  };
 }
