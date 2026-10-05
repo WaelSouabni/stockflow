@@ -25,7 +25,7 @@ export default async function StockPage() {
             <form
               key={product.id}
               action={recordStockMovementAction}
-              className="grid gap-3 rounded-2xl border bg-white p-4 md:grid-cols-[1fr_160px_120px_1fr_110px]"
+              className="grid gap-3 rounded-2xl border bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:grid-cols-[1fr_160px_120px_1fr_110px]"
             >
               <input type="hidden" name="productId" value={product.id} />
               <div>
@@ -73,8 +73,8 @@ export default async function StockPage() {
           </div>
 
           <div className="overflow-x-auto rounded-2xl border bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50">
+            <table className="w-full min-w-[720px] text-sm">
+              <thead className="bg-slate-50 dark:bg-slate-800/70">
                 <tr>
                   <th className="p-4 text-left">Date</th>
                   <th className="p-4 text-left">Produit</th>
