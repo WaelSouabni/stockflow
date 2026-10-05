@@ -22,7 +22,7 @@ const links = [
 export function MainNavClient({ session }: Props) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const visibleLinks = links.filter(link => !("roles" in link) || !link.roles || (session && link.roles.includes(session.role)));
+  const visibleLinks = links.filter(link => !("roles" in link) || !link.roles || (session && link.roles.some(role => role === session.role)));
 
   return (
     <nav aria-label="Navigation principale" className="sticky top-0 z-40 border-b bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
