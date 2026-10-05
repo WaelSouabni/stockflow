@@ -8,7 +8,7 @@ const secret = secretValue ? new TextEncoder().encode(secretValue) : null;
 export async function middleware(request: NextRequest) {
   if (request.nextUrl.pathname === "/login") return NextResponse.next();
 
-  if (!secret) {
+  if (!secret || (secretValue && process.env.NODE_ENV === "production" && secretValue.length < 32)) {
     if (process.env.NODE_ENV === "production") {
       return new NextResponse("Configuration serveur invalide.", { status: 500 });
     }
