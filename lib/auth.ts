@@ -21,10 +21,12 @@ type Session = {
 
 const SESSION_COOKIE = "stockflow_session";
 
-export async function registerUser(name: string, email: string, password: string) {
+export async function registerUser(name: string, companyName: string, email: string, password: string) {
   const normalizedEmail = email.trim().toLowerCase();
   const normalizedName = name.trim();
+  const normalizedCompanyName = companyName.trim();
   if (normalizedName.length < 2 || normalizedName.length > 120) throw new Error("Nom invalide.");
+  if (normalizedCompanyName.length < 2 || normalizedCompanyName.length > 150) throw new Error("Nom d’entreprise invalide.");
   if (password.length < 8 || password.length > 128) throw new Error("Mot de passe invalide.");
 
   const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
@@ -32,9 +34,9 @@ export async function registerUser(name: string, email: string, password: string
 
   const passwordHash = await bcrypt.hash(password, 12);
   return prisma.$transaction(async tx => {
-    const company = await tx.company.create({ data: { name: "Mon entreprise" } });
+    const company = await tx.company.create({ data: { name: normalizedCompanyName, onboardingCompleted: false } });
     await tx.companySettings.create({
-      data: { companyId: company.id, companyName: "Mon entreprise", email: normalizedEmail },
+      data: { companyId: company.id, companyName: normalizedCompanyName, email: normalizedEmail },
     });
     return tx.user.create({
       data: { name: normalizedName, email: normalizedEmail, passwordHash, role: "ADMIN", companyId: company.id },
@@ -58,6 +60,8 @@ export async function loginUser(email: string, password: string, rateLimitKey?: 
 
   await clearLoginFailures(key);
 
+  const company = await prisma.company.findUnique({ where: { id: user.companyId }, select: { onboardingCompleted: true } });
+
   const token = await new SignJWT({
     sub: user.id,
     companyId: user.companyId,
@@ -77,6 +81,8 @@ export async function loginUser(email: string, password: string, rateLimitKey?: 
     maxAge: 60 * 60 * 24 * 7,
     path: "/",
   });
+
+  return { onboardingCompleted: company?.onboardingCompleted ?? false };
 }
 
 export async function logoutUser() {
